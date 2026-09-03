@@ -92,7 +92,7 @@ All fields optional; edit under the `web-search-brave` entry in your profile's `
 dsh --profile web --dump-config   # the web-search-brave entry is mounted
 ```
 
-Then ask the model to use `web_search` in a conversation. A working search appends a `web/brave-search-request` record (the endpoint, no key) to the session log.
+Then ask the model to use `web_search` in a conversation. **Note: installing a new plugin requires a dsh restart to take effect** — the running host does not hot-mount newly installed plugins (edits to an already-mounted plugin's config are hot-reloaded).
 
 ## Development
 

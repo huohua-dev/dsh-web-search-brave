@@ -92,7 +92,7 @@ token 按以下顺序解析，先命中生效：
 dsh --profile web --dump-config   # 确认 web-search-brave 条目已挂载
 ```
 
-然后在对话中直接让模型使用 `web_search` 工具。成功的搜索会向会话日志追加一条 `web/brave-search-request` 记录（仅端点，不含 key）。
+然后在对话中直接让模型使用 `web_search` 工具。**注意：新安装插件需要重启 dsh 才能生效**——运行中的宿主不会热挂载新安装的插件（已挂载插件的配置修改是热生效的）。
 
 ## 开发
 
