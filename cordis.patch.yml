@@ -1,0 +1,23 @@
+# @huohua-dev/dsh-web-search-brave bundle patch.
+#
+# Mounts the Brave search provider and selects it as the active web search
+# provider (the base bundle pins `deepseek-official`). Brave requires a key —
+# no keyless mode: add `BRAVE_API_KEY: <token>` to $DSH_HOME/.credentials.yaml
+# or export BRAVE_API_KEY in the launching environment. Never commit a key.
+#
+# To switch back to the bundled DeepSeek provider, remove this plugin or add a
+# profile-level patch (`$DSH_HOME/profiles/<profile>/cordis.patch.yml`):
+#
+#   - id: web
+#     config:
+#       searchProvider: deepseek-official
+
+- insert:
+    - id: web-search-brave
+      name: '@huohua-dev/dsh-web-search-brave'
+      config:
+        apiKeyEnv: BRAVE_API_KEY
+
+- id: web
+  config:
+    searchProvider: brave
