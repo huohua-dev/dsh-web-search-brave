@@ -423,12 +423,11 @@ describe("apply", () => {
 		};
 		const sctx = {
 			settings: {
-				register(ns, schema, { base }) {
-					source = base;
-					return {
-						get: () => source,
-						watch: (listener) => watchers.push(listener)
-					};
+				installSection(owner, ns, schema, entry, hooks) {
+					source = entry;
+					hooks.setSource(() => source);
+					hooks.onChange();
+					watchers.push(() => hooks.onChange());
 				}
 			},
 			effect() {}
