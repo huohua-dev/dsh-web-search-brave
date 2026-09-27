@@ -95,10 +95,42 @@ describe("mapBraveResponse", () => {
 		expect(mapBraveResponse({ web: { results: [] } })).toEqual({ sources: [], truncated: false });
 	});
 
+	it("treats a type=search body without a web key as a valid no-results outcome", () => {
+		// Real Brave shape for a query with no web hits: the `web` key is
+		// omitted entirely rather than sent as `web: { results: [] }`.
+		const body = { type: "search", query: { original: "\"4.18.0-553.30.1\" \"Copy Fail\"" }, mixed: { type: "mixed", main: [] } };
+		expect(mapBraveResponse(body)).toEqual({ sources: [], truncated: false });
+	});
+
 	it("throws WEB_PROVIDER_ERROR when the body is not a Brave web response", () => {
-		for (const body of [{}, { web: null }, { web: { results: null } }, null, undefined]) {
+		for (const body of [
+			{},
+			{ web: null },
+			{ web: { results: null } },
+			{ type: "search", web: null },
+			{ type: "search", web: {} },
+			{ type: "ErrorResponse", error: { detail: "x" } },
+			[],
+			"search",
+			null,
+			undefined
+		]) {
 			expect(() => mapBraveResponse(body)).toThrowError(expect.objectContaining({ code: "WEB_PROVIDER_ERROR" }));
 		}
+	});
+
+	it("describes only the body shape, never its values, in the error", () => {
+		const body = { type: "news", query: { original: "secret query text" }, results: [{ title: "leaky title" }] };
+		let error;
+		try {
+			mapBraveResponse(body);
+		} catch (caught) {
+			error = caught;
+		}
+		expect(error.message).toContain("type=\"news\"");
+		expect(error.message).toContain("keys: type, query, results");
+		expect(error.message).not.toContain("secret query text");
+		expect(error.message).not.toContain("leaky title");
 	});
 });
 
@@ -307,6 +339,12 @@ describe("BraveSearchProvider.search", () => {
 		const pending = p.search({ query: "x" }, controller.signal);
 		controller.abort();
 		await expect(pending).rejects.toMatchObject({ code: "WEB_ABORTED" });
+	});
+
+	it("resolves a no-hit query (Brave omits `web`) to empty sources instead of failing", async () => {
+		globalThis.fetch = async () => okResponse({ type: "search", query: { original: "x" }, mixed: { type: "mixed", main: [] } });
+		const p = new BraveSearchProvider(braveOptions({ apiKey: "k" }));
+		await expect(p.search({ query: "x" })).resolves.toEqual({ sources: [], truncated: false });
 	});
 
 	it("surfaces the provider error detail on HTTP failures", async () => {
